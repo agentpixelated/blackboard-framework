@@ -27,7 +27,7 @@ class CoinToss(Scene):
         header.to_corner(UL, buff=0.55)
         outcomes = ["AAA", "AAG", "AGA", "AGG", "GAA", "GAG", "GGA", "GGG"]
         fav = {"AAG", "AGA", "GAA"}
-        GRAD_A, GRAD_B = "#223544", "#0d1319"  # dark blue-grey gradient fill
+        GRAD_A, GRAD_B = "#2b6a7d", "#1a332c"  # 3b1b blue->green, dark
         cells = {}
         for i, o in enumerate(outcomes):
             row, col = divmod(i, 4)
