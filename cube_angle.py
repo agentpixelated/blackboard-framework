@@ -8,9 +8,9 @@ config.frame_rate = 60
 config.background_color = BG
 
 # ---- Oblique projection: screen = (x + 0.45 z, y - 0.45 z)
-# Viewer above/front: sees top (EFGH), back, left faces. Solid x-ray cube:
-# dark faces, hidden edges simply occluded (no dashes), AG/EG drawn on top.
-K = 1.65
+# 3Blue1Brown-style transparent wireframe: all 12 edges visible, thin
+# elegant strokes, no dashes, no fills. Color grammar: EG blue, AG yellow.
+K = 1.6
 CX, CY = 2.7, -0.3
 
 def proj(p):
@@ -18,8 +18,7 @@ def proj(p):
     return np.array([CX + K * (x + 0.45 * z), CY + K * (y - 0.45 * z), 0.0])
 
 C0 = np.array([CX, CY, 0.0])
-FACE_DARK = "#0d1319"
-EDGE_C = "#E8E8E8"
+WIRE = "#D8D8D8"
 
 
 class CubeAngle(Scene):
@@ -29,18 +28,14 @@ class CubeAngle(Scene):
         E3 = (-1, 1, -1);  F3 = (1, 1, -1);  G3 = (1, 1, 1);  H3 = (-1, 1, 1)
         A, B, C, D, E, F, G, H = map(proj, (A3, B3, C3, D3, E3, F3, G3, H3))
 
-        # visible faces (top / back / left); AB, BC, BF occluded -> not drawn
-        face_top = Polygon(E, F, G, H, fill_color=FACE_DARK, fill_opacity=0.92,
-                           stroke_width=0)
-        face_back = Polygon(D, C, G, H, fill_color=FACE_DARK, fill_opacity=0.92,
-                            stroke_width=0)
-        face_left = Polygon(A, D, H, E, fill_color=FACE_DARK, fill_opacity=0.92,
-                            stroke_width=0)
-        faces = VGroup(face_top, face_back, face_left)
-
-        edges = VGroup(*[Line(p, q, color=EDGE_C, stroke_width=5)
-                         for p, q in [(C, D), (D, A), (E, F), (F, G), (G, H),
-                                      (H, E), (A, E), (C, G), (D, H)]])
+        top_pairs = [(E, F), (F, G), (G, H), (H, E)]
+        rest_pairs = [(A, B), (B, C), (C, D), (D, A),
+                      (A, E), (B, F), (C, G), (D, H)]
+        top_edges = VGroup(*[Line(p, q, color=WIRE, stroke_width=4)
+                             for p, q in top_pairs])
+        rest_edges = VGroup(*[Line(p, q, color=WIRE, stroke_width=4)
+                              for p, q in rest_pairs])
+        edges = VGroup(top_edges, rest_edges)
 
         # ---------- Beat 1: title + problem statement ----------
         title = serif("Sudut antara Garis dan Bidang", size=60)
@@ -51,15 +46,15 @@ class CubeAngle(Scene):
         self.play(FadeIn(stmt), run_time=0.8)
         self.wait(1.2)
 
-        # ---------- Beat 2: the solid cube arrives ----------
+        # ---------- Beat 2: glass cube draws itself ----------
         header = serif(r"Sudut garis $AG$ terhadap bidang $EFGH$", size=34)
         header.to_corner(UL, buff=0.55)
         self.play(
             FadeOut(title, run_time=0.8),
             FadeOut(stmt, run_time=0.8),
-            FadeIn(faces, run_time=1.0),
+            Create(edges, run_time=1.6),
+            FadeIn(header, run_time=0.6),
         )
-        self.play(Create(edges, run_time=1.4), FadeIn(header, run_time=0.6))
 
         labels = VGroup()
         for letter, v3 in (("A", A3), ("B", B3), ("C", C3), ("D", D3),
@@ -73,17 +68,18 @@ class CubeAngle(Scene):
                   run_time=1.4)
         self.wait(0.6)
 
-        # ---------- Beat 3: highlight the plane EFGH ----------
+        # ---------- Beat 3: the plane EFGH lights up blue ----------
         plabel = serif(r"bidang $EFGH$", size=30, color=BLUE)
         plabel.move_to(np.array([6.0, 1.5, 0.0]))
         self.play(
-            face_top.animate.set_fill(BLUE, opacity=0.5),
+            *[e.animate.set_color(BLUE).set_stroke_width(6) for e in top_edges],
             FadeIn(plabel, run_time=1.0),
+            run_time=1.2,
         )
         self.wait(0.8)
 
-        # ---------- Beat 4: draw AG (x-ray, on top of faces) ----------
-        ag = Line(A, G, color=YELLOW, stroke_width=8)
+        # ---------- Beat 4: draw AG ----------
+        ag = Line(A, G, color=YELLOW, stroke_width=7)
         aglabel = serif(r"garis $AG$", size=30, color=YELLOW)
         aglabel.move_to((A + G) / 2 + np.array([1.1, -0.65, 0.0]))
         self.play(Create(ag, run_time=1.2), FadeIn(aglabel, run_time=0.9))
@@ -93,7 +89,7 @@ class CubeAngle(Scene):
         s1 = serif(r"Proyeksi $AG$ pada bidang $EFGH$ adalah $EG$", size=28)
         s1.move_to(np.array([-3.55, 2.55, 0.0]))
         self.play(FadeIn(s1), run_time=0.8)
-        dot = Dot(A, color=YELLOW, radius=0.12)
+        dot = Dot(A, color=YELLOW, radius=0.11)
         self.add(dot)
         self.play(dot.animate.move_to(E), run_time=0.9)
         self.play(FadeOut(dot), run_time=0.3)
@@ -125,8 +121,8 @@ class CubeAngle(Scene):
         self.play(FadeIn(s2), run_time=0.9)
 
         self.play(*[m.animate.set_opacity(0.25)
-                     for m in [faces, edges, labels, face_top, plabel,
-                               ag, aglabel, eg, arc, alphalabel]],
+                     for m in [edges, labels, plabel, ag, aglabel, eg, arc,
+                               alphalabel]],
                   run_time=0.8)
 
         E2 = np.array([-5.9, -3.1, 0.0])
