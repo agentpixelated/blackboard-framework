@@ -12,6 +12,15 @@ TEAL = "#5ba5bc"
 RED = "#b86e64"
 
 
+def kwcap(parts, y=3.55, x=0.5):
+    """Keyword caption: parts = [(text, color_or_None), ...].
+    The keyword (colored) appears first, then its visual follows."""
+    mob = VGroup(*[serif(t, size=32, color=c or WHITE) for t, c in parts])
+    mob.arrange(RIGHT, buff=0.18)
+    mob.move_to([x, y, 0.0])
+    return mob
+
+
 class LoopTheLoop(Scene):
     def construct(self):
         # ================= geometry =================
@@ -102,11 +111,18 @@ class LoopTheLoop(Scene):
             Create(incline, run_time=1.5),
             Create(loop, run_time=2.0),
         )
+        kwR = kwcap([("Jari-jari ", None), ("R", TEAL), (" = 0,5 m", None)])
+        self.play(FadeIn(kwR, run_time=0.8))
+        self.wait(0.5)
         self.play(Create(rad_line, run_time=0.6), FadeIn(r_lab, run_time=0.6))
+        self.wait(0.5)
+        kwH = kwcap([("Ketinggian ", None), ("h", YELLOW), (" yang dicari", None)])
+        self.play(FadeOut(kwR, run_time=0.6), FadeIn(kwH, run_time=0.8))
         self.wait(0.5)
         self.play(Create(dash_top, run_time=0.6), Create(dash_bot, run_time=0.6),
                   Create(h_arrow, run_time=0.8), FadeIn(h_lab, run_time=0.6))
         self.wait(1.0)
+        self.play(FadeOut(kwH, run_time=0.6))
 
         strat = serif("Strategi: (1) syarat di puncak, (2) kekekalan energi.",
                       size=28, color=GRAY)
@@ -147,24 +163,34 @@ class LoopTheLoop(Scene):
         fbd_eq.set_color_by_tex("N", BLUE)
         fbd_eq.set_color_by_tex("mg", RED)
         fbd_eq.move_to(np.array([5.0, 2.3, 0.0]))
-        t_key = serif("Tepat tidak jatuh $\\Rightarrow N = 0$", size=28)
-        t_key.move_to(np.array([5.0, 1.5, 0.0]))
         e_v2 = MathTex(r"v^2 = gR", font_size=48, color=YELLOW)
         e_v2.move_to(np.array([5.0, 0.75, 0.0]))
         v2_box = SurroundingRectangle(e_v2, color=YELLOW, buff=0.12,
                                       stroke_width=2)
 
+        kwMg = kwcap([("Berat ", None), ("mg", RED), (" ke bawah", None)])
+        self.play(FadeIn(kwMg, run_time=0.8))
+        self.wait(0.5)
         self.play(Create(mg_arr, run_time=0.8), FadeIn(mg_lab, run_time=0.6))
+        self.wait(0.8)
+        kwN = kwcap([("Gaya normal ", None), ("N", BLUE), (" ke bawah", None)])
+        self.play(FadeOut(kwMg, run_time=0.6), FadeIn(kwN, run_time=0.8))
         self.wait(0.5)
         self.play(Create(n_arr, run_time=0.8), FadeIn(n_lab, run_time=0.6))
-        self.wait(0.5)
-        self.play(Write(fbd_eq), run_time=1.2)
         self.wait(0.8)
-        self.play(FadeIn(t_key), run_time=0.8)
+        self.play(FadeOut(kwN, run_time=0.6), Write(fbd_eq, run_time=1.2))
         self.wait(0.8)
+        kwFall = kwcap([("Tepat tidak jatuh ", None), (r"$\Rightarrow$ N = 0", BLUE)])
+        self.play(FadeIn(kwFall, run_time=0.8))
+        self.wait(1.0)
+        self.play(FadeOut(kwFall, run_time=0.6))
+        kwV2 = kwcap([("Syarat minimum: ", None), ("v² = gR", YELLOW)])
+        self.play(FadeIn(kwV2, run_time=0.8))
+        self.wait(0.6)
         self.play(Write(e_v2), run_time=1.0)
         self.play(Create(v2_box), run_time=0.6)
         self.wait(1.5)
+        self.play(FadeOut(kwV2, run_time=0.6))
 
         # ================= beat 5: energy =================
         self.play(
@@ -173,17 +199,19 @@ class LoopTheLoop(Scene):
             FadeOut(mg_lab, run_time=0.6),
             FadeOut(n_lab, run_time=0.6),
             FadeOut(fbd_eq, run_time=0.6),
-            FadeOut(t_key, run_time=0.6),
             FadeOut(e_v2, run_time=0.6),
             FadeOut(v2_box, run_time=0.6),
         )
         self.wait(0.5)
+        kwE = kwcap([("Kekekalan energi", YELLOW)])
+        self.play(FadeIn(kwE, run_time=0.8))
+        self.wait(0.6)
         e1 = MathTex(r"mgh = mg(2R) + \frac{1}{2}mv^2", font_size=44)
         e1.move_to(np.array([-2.8, -3.0, 0.0]))
         intuit = serif("Butuh laju di puncak, jadi $h > 2R$", size=20,
                        color=GRAY)
         intuit.move_to(np.array([5.3, -1.2, 0.0]))
-        self.play(Write(e1), run_time=1.4)
+        self.play(FadeOut(kwE, run_time=0.6), Write(e1, run_time=1.4))
         self.play(FadeIn(intuit), run_time=0.8)
         self.wait(1.0)
         e2 = MathTex(r"mgh = 2mgR + \frac{1}{2}m(gR)", font_size=44)
