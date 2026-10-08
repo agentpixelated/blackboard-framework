@@ -27,14 +27,17 @@ class CoinToss(Scene):
         header.to_corner(UL, buff=0.55)
         outcomes = ["AAA", "AAG", "AGA", "AGG", "GAA", "GAG", "GGA", "GGG"]
         fav = {"AAG", "AGA", "GAA"}
+        GRAD_A, GRAD_B = "#223544", "#0d1319"  # dark blue-grey gradient fill
         cells = {}
         for i, o in enumerate(outcomes):
             row, col = divmod(i, 4)
             coins = VGroup()
             for ch in o:
-                c = Circle(radius=0.28, color=WIRE, stroke_width=3)
-                t = MathTex(ch, font_size=26).move_to(c.get_center())
-                coins.add(VGroup(c, t))
+                fill = Circle(radius=0.28, fill_color=[GRAD_A, GRAD_B],
+                              fill_opacity=0.95, stroke_width=0)
+                ring = Circle(radius=0.28, color=WIRE, stroke_width=3)
+                t = MathTex(ch, font_size=26).move_to(fill.get_center())
+                coins.add(VGroup(fill, ring, t))
             coins.arrange(RIGHT, buff=0.1)
             x = (col - 1.5) * 2.48
             y = (0.5 - row) * 1.25
@@ -54,9 +57,14 @@ class CoinToss(Scene):
         # ---------- Beat 3: highlight the 3 favorable outcomes ----------
         t1 = serif(r"3 dari 8 hasil: tepat 2 angka dan 1 gambar", size=28)
         t1.move_to(np.array([-3.9, 2.45, 0.0]))
+        fav_anims = []
+        for o in fav:
+            for coin in cells[o]:
+                fav_anims.append(coin[1].animate.set_color(YELLOW))
+                fav_anims.append(coin[2].animate.set_color(YELLOW))
         self.play(
             FadeIn(t1, run_time=0.8),
-            *[cells[o].animate.set_color(YELLOW) for o in fav],
+            *fav_anims,
             *[cells[o].animate.set_opacity(0.18) for o in outcomes if o not in fav],
             run_time=1.2,
         )
