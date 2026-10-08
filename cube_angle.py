@@ -98,14 +98,17 @@ class CubeAngle(Scene):
 
         u1 = A - G; u1 = u1 / np.linalg.norm(u1)
         u2 = E - G; u2 = u2 / np.linalg.norm(u2)
-        alpha3 = float(np.arccos(np.clip(np.dot(u1, u2), -1, 1)))
-        r = 0.6
-        arc = ParametricFunction(
-            lambda t: G + r * (np.cos(t) * u1 + np.sin(t) * u2),
-            t_range=[0, alpha3, 0.02], color=YELLOW, stroke_width=5)
+        # NOTE: manual cos(t)*u1+sin(t)*u2 parametrization is WRONG unless
+        # u1 _|_ u2 (it does not end on u2); Manim's Angle misbehaved here too.
+        # Correct: sweep the true polar angles (slerp).
+        th1 = float(np.arctan2(u1[1], u1[0]))
+        th2 = float(np.arctan2(u2[1], u2[0]))
+        dth = (th2 - th1 + np.pi) % (2 * np.pi) - np.pi
+        arc = Arc(radius=0.6, start_angle=th1, angle=dth, arc_center=G,
+                  color=YELLOW, stroke_width=5)
         bis = u1 + u2; bis = bis / np.linalg.norm(bis)
         alphalabel = MathTex(r"\alpha", font_size=40, color=YELLOW)
-        alphalabel.move_to(G + bis * (r + 0.45))
+        alphalabel.move_to(G + bis * 1.05)
         self.play(Create(arc, run_time=0.7), FadeIn(alphalabel, run_time=0.6))
 
         e_alpha = MathTex(r"\alpha", r"= \angle AGE", font_size=48)
