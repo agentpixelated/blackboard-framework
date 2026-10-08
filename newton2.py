@@ -36,6 +36,15 @@ def arrow(s, e, color, w=6):
                  max_tip_length_to_length_ratio=0.25)
 
 
+def kwcap(parts, y=3.55, x=0.5):
+    """Keyword caption: parts = [(text, color_or_None), ...].
+    The keyword (colored) appears first, then its visual follows."""
+    mob = VGroup(*[serif(t, size=32, color=c or WHITE) for t, c in parts])
+    mob.arrange(RIGHT, buff=0.18)
+    mob.move_to([x, y, 0.0])
+    return mob
+
+
 class NewtonPulley(Scene):
     def construct(self):
         # ============ Beat 1: title + problem ============
@@ -96,11 +105,16 @@ class NewtonPulley(Scene):
         self.play(FadeIn(rectB, run_time=1.0), FadeIn(labB, run_time=1.0))
         self.wait(2.5)
 
-        # ============ Beat 3: one tension everywhere ============
-        capT = serif(r"Tegangan tali sama di kedua ujung.", size=30, color=GRAY)
-        capT.move_to([0.0, 3.55, 0.0])
-        self.play(FadeIn(capT, run_time=1.2))
-        self.wait(2.0)
+        # ============ Beat 3: keyword -> visual (tension) ============
+        kwT = kwcap([("Tegangan tali", BLUE), (" sama di kedua ujung.", None)])
+        self.play(FadeIn(kwT, run_time=1.0))
+        self.wait(0.8)
+        tS1 = MathTex("T", font_size=30, color=BLUE).move_to(
+            (PA + PUL) / 2 + np.array([0.28, 0.2, 0.0]))
+        tS2 = MathTex("T", font_size=30, color=BLUE).move_to(
+            np.array([BC[0] + 0.32, (PUL[1] + BC[1]) / 2, 0.0]))
+        self.play(FadeIn(tS1, run_time=0.8), FadeIn(tS2, run_time=0.8))
+        self.wait(1.8)
 
         # ============ Beat 4: free-body diagram of B ============
         wB = arrow([0.45, -1.05, 0], [0.45, -1.8, 0], W_RED)
@@ -117,11 +131,18 @@ class NewtonPulley(Scene):
         rowB.arrange(RIGHT, buff=0.25)
         leftcol(rowB, 2.3)
 
+        kwB1 = kwcap([("Berat ", None), ("60 N", W_RED), (" ke bawah", None)])
+        self.play(FadeOut(kwT, run_time=0.6), FadeOut(tS1, run_time=0.6),
+                  FadeOut(tS2, run_time=0.6), FadeIn(kwB1, run_time=0.8))
+        self.wait(0.6)
         self.play(Create(wB, run_time=1.2), FadeIn(wB_lab, run_time=0.8))
         self.wait(1.0)
+        kwB2 = kwcap([("Tegangan ", None), ("T", BLUE), (" ke atas", None)])
+        self.play(FadeOut(kwB1, run_time=0.6), FadeIn(kwB2, run_time=0.8))
+        self.wait(0.6)
         self.play(Create(tB, run_time=1.2), FadeIn(tB_lab, run_time=0.8))
         self.wait(1.0)
-        self.play(Write(rowB), run_time=1.6)
+        self.play(FadeOut(kwB2, run_time=0.6), Write(rowB, run_time=1.6))
         self.wait(2.0)
 
         # ============ Beat 5: free-body diagram of A ============
@@ -154,17 +175,30 @@ class NewtonPulley(Scene):
         rowA.arrange(RIGHT, buff=0.25)
         leftcol(rowA, 1.4)
 
+        kwA1 = kwcap([("Berat ", None), ("40 N", W_RED), (" ke bawah", None)])
+        self.play(FadeIn(kwA1, run_time=0.8))
+        self.wait(0.6)
         self.play(Create(wA, run_time=1.2), FadeIn(wA_lab, run_time=0.8))
         self.wait(1.0)
+        kwA2 = kwcap([("Normal ", None), ("N", GREEN), (" tegak lurus bidang", None)])
+        self.play(FadeOut(kwA1, run_time=0.6), FadeIn(kwA2, run_time=0.8))
+        self.wait(0.6)
         self.play(Create(nA, run_time=1.2), FadeIn(nA_lab, run_time=0.8))
         self.wait(1.0)
+        kwA3 = kwcap([("Tegangan ", None), ("T", BLUE), (" ke atas bidang", None)])
+        self.play(FadeOut(kwA2, run_time=0.6), FadeIn(kwA3, run_time=0.8))
+        self.wait(0.6)
         self.play(Create(tA, run_time=1.2), FadeIn(tA_lab, run_time=0.8))
         self.wait(1.0)
+        kwA4 = kwcap([("Komponen berat ", None), ("24 N", ORANGE),
+                      (" ke bawah bidang", None)])
+        self.play(FadeOut(kwA3, run_time=0.6), FadeIn(kwA4, run_time=0.8))
+        self.wait(0.6)
         self.play(Create(pA, run_time=1.4), FadeIn(pA_lab, run_time=0.8))
         self.wait(0.8)
         self.play(FadeIn(note24, run_time=1.0))
         self.wait(1.5)
-        self.play(Write(rowA), run_time=1.6)
+        self.play(FadeOut(kwA4, run_time=0.6), Write(rowA, run_time=1.6))
         self.wait(2.0)
 
         # ============ Beat 6: add the equations ============
@@ -179,7 +213,11 @@ class NewtonPulley(Scene):
         intu = serif(r"selisih gaya $\div$ massa total", size=28, color=GRAY)
         leftcol(intu, -2.35)
 
-        self.play(FadeOut(note24, run_time=0.8), Write(e_mid, run_time=1.4))
+        kwAdd = kwcap([("Jumlahkan", YELLOW), (" — T saling menghapus.", None)])
+        self.play(FadeIn(kwAdd, run_time=0.8))
+        self.wait(0.8)
+        self.play(FadeOut(note24, run_time=0.8), FadeOut(kwAdd, run_time=0.8),
+                  Write(e_mid, run_time=1.4))
         self.wait(1.2)
         self.play(Write(e_add, run_time=1.4))
         self.wait(1.2)
@@ -203,7 +241,7 @@ class NewtonPulley(Scene):
         self.play(
             *[FadeOut(m, run_time=1.2) for m in
               [wB, wB_lab, tB, tB_lab, wA, wA_lab, nA, nA_lab,
-               tA, tA_lab, pA, pA_lab, capT]],
+               tA, tA_lab, pA, pA_lab]],
             FadeIn(aB, run_time=1.2), FadeIn(aB_lab, run_time=1.2),
             FadeIn(aA, run_time=1.2), FadeIn(aA_lab, run_time=1.2),
             FadeIn(cap, run_time=1.2),
