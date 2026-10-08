@@ -8,9 +8,9 @@ config.frame_rate = 60
 config.background_color = BG
 
 # ---- Oblique projection: screen = (x + 0.45 z, y - 0.45 z)
-# Viewer above/front: sees top (EFGH), back, left faces.
-# Hidden vertex is B -> dashed edges: AB, BC, BF.
-K = 1.5
+# Viewer above/front: sees top (EFGH), back, left faces. Solid x-ray cube:
+# dark faces, hidden edges simply occluded (no dashes), AG/EG drawn on top.
+K = 1.65
 CX, CY = 2.7, -0.3
 
 def proj(p):
@@ -18,6 +18,8 @@ def proj(p):
     return np.array([CX + K * (x + 0.45 * z), CY + K * (y - 0.45 * z), 0.0])
 
 C0 = np.array([CX, CY, 0.0])
+FACE_DARK = "#0d1319"
+EDGE_C = "#E8E8E8"
 
 
 class CubeAngle(Scene):
@@ -27,34 +29,37 @@ class CubeAngle(Scene):
         E3 = (-1, 1, -1);  F3 = (1, 1, -1);  G3 = (1, 1, 1);  H3 = (-1, 1, 1)
         A, B, C, D, E, F, G, H = map(proj, (A3, B3, C3, D3, E3, F3, G3, H3))
 
-        solid_pairs = [(B, C), (C, D), (D, A),
-                       (F, G), (G, H), (H, E),
-                       (A, E), (C, G), (D, H)]
-        dashed_pairs = [(A, B), (B, C), (B, F)]
+        # visible faces (top / back / left); AB, BC, BF occluded -> not drawn
+        face_top = Polygon(E, F, G, H, fill_color=FACE_DARK, fill_opacity=0.92,
+                           stroke_width=0)
+        face_back = Polygon(D, C, G, H, fill_color=FACE_DARK, fill_opacity=0.92,
+                            stroke_width=0)
+        face_left = Polygon(A, D, H, E, fill_color=FACE_DARK, fill_opacity=0.92,
+                            stroke_width=0)
+        faces = VGroup(face_top, face_back, face_left)
+
+        edges = VGroup(*[Line(p, q, color=EDGE_C, stroke_width=5)
+                         for p, q in [(C, D), (D, A), (E, F), (F, G), (G, H),
+                                      (H, E), (A, E), (C, G), (D, H)]])
 
         # ---------- Beat 1: title + problem statement ----------
-        title = serif("Sudut antara Garis dan Bidang", size=52)
+        title = serif("Sudut antara Garis dan Bidang", size=60)
         stmt = serif(r"Kubus $ABCD.EFGH$: sudut antara garis $AG$ dan bidang $EFGH$"
-                     r" adalah $\alpha$. Tentukan $\cos\alpha$.", size=30, color=GRAY)
+                     r" adalah $\alpha$. Tentukan $\cos\alpha$.", size=32, color=GRAY)
         stmt.next_to(title, DOWN, buff=0.45)
         self.play(Write(title), run_time=1.2)
         self.play(FadeIn(stmt), run_time=0.8)
         self.wait(1.2)
 
-        # ---------- Beat 2: build the cube (title leaves as it arrives) ----------
-        header = serif(r"Sudut garis $AG$ terhadap bidang $EFGH$", size=30)
+        # ---------- Beat 2: the solid cube arrives ----------
+        header = serif(r"Sudut garis $AG$ terhadap bidang $EFGH$", size=34)
         header.to_corner(UL, buff=0.55)
-        edges_s = VGroup(*[Line(p, q, color=WHITE, stroke_width=3)
-                           for p, q in solid_pairs])
-        edges_d = VGroup(*[DashedLine(p, q, color=GRAY, stroke_width=3)
-                           for p, q in dashed_pairs])
         self.play(
             FadeOut(title, run_time=0.8),
             FadeOut(stmt, run_time=0.8),
-            Create(edges_s, run_time=1.6),
-            Create(edges_d, run_time=1.6),
+            FadeIn(faces, run_time=1.0),
         )
-        self.play(FadeIn(header), run_time=0.5)
+        self.play(Create(edges, run_time=1.4), FadeIn(header, run_time=0.6))
 
         labels = VGroup()
         for letter, v3 in (("A", A3), ("B", B3), ("C", C3), ("D", D3),
@@ -62,93 +67,94 @@ class CubeAngle(Scene):
             s = proj(v3)
             d = s - C0
             d = d / np.linalg.norm(d)
-            lab = MathTex(letter, font_size=30).move_to(s + d * 0.52)
+            lab = MathTex(letter, font_size=34).move_to(s + d * 0.55)
             labels.add(lab)
         self.play(LaggedStart(*[FadeIn(l) for l in labels], lag_ratio=0.07),
                   run_time=1.4)
         self.wait(0.6)
 
         # ---------- Beat 3: highlight the plane EFGH ----------
-        topface = Polygon(E, F, G, H, fill_color=BLUE, fill_opacity=0.32,
-                          stroke_width=0)
-        plabel = serif(r"bidang $EFGH$", size=28, color=BLUE)
-        plabel.move_to(np.array([5.85, 1.45, 0.0]))
+        plabel = serif(r"bidang $EFGH$", size=30, color=BLUE)
+        plabel.move_to(np.array([6.0, 1.5, 0.0]))
         self.play(
-            FadeIn(topface, run_time=1.0),
-            *[m.animate.set_color(GRAY).set_opacity(0.55) for m in edges_s],
+            face_top.animate.set_fill(BLUE, opacity=0.5),
             FadeIn(plabel, run_time=1.0),
         )
         self.wait(0.8)
 
-        # ---------- Beat 4: draw AG ----------
-        ag = Line(A, G, color=YELLOW, stroke_width=7)
-        aglabel = serif(r"garis $AG$", size=28, color=YELLOW)
-        aglabel.move_to((A + G) / 2 + np.array([1.05, -0.62, 0.0]))
+        # ---------- Beat 4: draw AG (x-ray, on top of faces) ----------
+        ag = Line(A, G, color=YELLOW, stroke_width=8)
+        aglabel = serif(r"garis $AG$", size=30, color=YELLOW)
+        aglabel.move_to((A + G) / 2 + np.array([1.1, -0.65, 0.0]))
         self.play(Create(ag, run_time=1.2), FadeIn(aglabel, run_time=0.9))
         self.wait(0.8)
 
         # ---------- Beat 5: the projection ----------
-        s1 = serif(r"Proyeksi $AG$ pada bidang $EFGH$ adalah $EG$", size=25)
+        s1 = serif(r"Proyeksi $AG$ pada bidang $EFGH$ adalah $EG$", size=28)
         s1.move_to(np.array([-3.55, 2.55, 0.0]))
         self.play(FadeIn(s1), run_time=0.8)
-        dot = Dot(A, color=YELLOW, radius=0.09)
+        dot = Dot(A, color=YELLOW, radius=0.12)
         self.add(dot)
         self.play(dot.animate.move_to(E), run_time=0.9)
         self.play(FadeOut(dot), run_time=0.3)
-        eg = Line(E, G, color=WHITE, stroke_width=5)
+        eg = Line(E, G, color=BLUE, stroke_width=6)
         self.play(Create(eg, run_time=0.9))
 
-        # angle marker at G between GA and GE (schematic, marks identity of alpha)
         u1 = A - G; u1 = u1 / np.linalg.norm(u1)
         u2 = E - G; u2 = u2 / np.linalg.norm(u2)
         alpha3 = float(np.arccos(np.clip(np.dot(u1, u2), -1, 1)))
-        r = 0.55
+        r = 0.6
         arc = ParametricFunction(
             lambda t: G + r * (np.cos(t) * u1 + np.sin(t) * u2),
-            t_range=[0, alpha3, 0.02], color=YELLOW, stroke_width=4)
+            t_range=[0, alpha3, 0.02], color=YELLOW, stroke_width=5)
         bis = u1 + u2; bis = bis / np.linalg.norm(bis)
-        alphalabel = MathTex(r"\alpha", font_size=36, color=YELLOW)
-        alphalabel.move_to(G + bis * (r + 0.42))
+        alphalabel = MathTex(r"\alpha", font_size=40, color=YELLOW)
+        alphalabel.move_to(G + bis * (r + 0.45))
         self.play(Create(arc, run_time=0.7), FadeIn(alphalabel, run_time=0.6))
 
-        e_alpha = MathTex(r"\alpha", r"= \angle AGE", font_size=44)
+        e_alpha = MathTex(r"\alpha", r"= \angle AGE", font_size=48)
         e_alpha[0].set_color(YELLOW)
         e_alpha.next_to(s1, DOWN, aligned_edge=LEFT, buff=0.35)
         self.play(Write(e_alpha), run_time=1.0)
         self.wait(0.8)
 
-        # ---------- Beat 6: right triangle justification + exact 2D triangle ----------
+        # ---------- Beat 6: justification + exact 2D triangle ----------
         s2 = serif(r"$AE \perp$ bidang $EFGH$ $\Rightarrow \triangle AGE$ siku-siku di $E$",
-                   size=25)
+                   size=28)
         s2.next_to(e_alpha, DOWN, aligned_edge=LEFT, buff=0.4)
         self.play(FadeIn(s2), run_time=0.9)
 
-        # dim the cube, focus shifts to the exact triangle
-        cube_parts = [edges_s, edges_d, labels, topface, plabel, ag, aglabel,
-                      eg, arc, alphalabel]
-        self.play(*[m.animate.set_opacity(0.28) for m in cube_parts],
+        self.play(*[m.animate.set_opacity(0.25)
+                     for m in [faces, edges, labels, face_top, plabel,
+                               ag, aglabel, eg, arc, alphalabel]],
                   run_time=0.8)
 
         E2 = np.array([-5.9, -3.1, 0.0])
         G2 = E2 + np.array([3.3, 0.0, 0.0])
         A2 = E2 + np.array([0.0, 3.3 / np.sqrt(2), 0.0])
-        tri = Polygon(E2, G2, A2, color=WHITE, stroke_width=4, fill_opacity=0)
-        self.play(Create(tri, run_time=1.0))
+        l_ae = Line(A2, E2, color="#BBBBBB", stroke_width=6)
+        l_eg = Line(E2, G2, color=BLUE, stroke_width=6)
+        l_ag = Line(A2, G2, color=YELLOW, stroke_width=6)
+        self.play(Create(l_ae, run_time=0.6), Create(l_eg, run_time=0.6),
+                  Create(l_ag, run_time=0.8))
 
         sq = Polygon(E2, E2 + np.array([0.32, 0, 0]), E2 + np.array([0.32, 0.32, 0]),
                      E2 + np.array([0, 0.32, 0]), color=WHITE, stroke_width=3)
-        lA = MathTex("A", font_size=28).next_to(A2, UP, buff=0.14)
-        lE = MathTex("E", font_size=28).move_to(E2 + np.array([-0.38, -0.38, 0]))
-        lG = MathTex("G", font_size=28).move_to(G2 + np.array([0.38, -0.38, 0]))
-        ls = MathTex("s", font_size=32).move_to((A2 + E2) / 2 + np.array([-0.5, 0, 0]))
-        lsg = MathTex(r"s\sqrt{2}", font_size=32).move_to((E2 + G2) / 2 + np.array([0, -0.5, 0]))
-        lag = MathTex(r"s\sqrt{3}", font_size=32).move_to((A2 + G2) / 2 + np.array([0.62, 0.12, 0]))
+        lA = MathTex("A", font_size=30).next_to(A2, UP, buff=0.14)
+        lE = MathTex("E", font_size=30).move_to(E2 + np.array([-0.4, -0.4, 0]))
+        lG = MathTex("G", font_size=30).move_to(G2 + np.array([0.4, -0.4, 0]))
+        ls = MathTex("s", font_size=34, color="#BBBBBB").move_to(
+            (A2 + E2) / 2 + np.array([-0.52, 0, 0]))
+        lsg = MathTex(r"s\sqrt{2}", font_size=34, color=BLUE).move_to(
+            (E2 + G2) / 2 + np.array([0, -0.52, 0]))
+        lag = MathTex(r"s\sqrt{3}", font_size=34, color=YELLOW).move_to(
+            (A2 + G2) / 2 + np.array([0.66, 0.12, 0]))
         a1 = float(np.arctan2(A2[1] - G2[1], A2[0] - G2[0]))
-        arc2 = Arc(radius=0.8, start_angle=a1, angle=np.pi - a1,
-                   arc_center=G2, color=YELLOW, stroke_width=4)
+        arc2 = Arc(radius=0.85, start_angle=a1, angle=np.pi - a1,
+                   arc_center=G2, color=YELLOW, stroke_width=5)
         bmid = (a1 + np.pi) / 2
-        alabel2 = MathTex(r"\alpha", font_size=34, color=YELLOW)
-        alabel2.move_to(G2 + 1.3 * np.array([np.cos(bmid), np.sin(bmid), 0]))
+        alabel2 = MathTex(r"\alpha", font_size=36, color=YELLOW)
+        alabel2.move_to(G2 + 1.35 * np.array([np.cos(bmid), np.sin(bmid), 0]))
         self.play(
             LaggedStart(FadeIn(sq), FadeIn(lA), FadeIn(lE), FadeIn(lG),
                         FadeIn(ls), FadeIn(lsg), FadeIn(lag),
@@ -157,24 +163,26 @@ class CubeAngle(Scene):
         )
         self.wait(0.6)
 
-        # ---------- Beat 7: computation ----------
-        e_cos1 = MathTex(r"\cos", r"\alpha", r"=\frac{\mathrm{EG}}{\mathrm{AG}}",
-                         font_size=44)
-        e_cos1[1].set_color(YELLOW)
+        # ---------- Beat 7: computation (color grammar: EG blue, AG yellow) ----------
+        e_cos1 = MathTex(r"\cos\alpha=\frac{\mathrm{EG}}{\mathrm{AG}}", font_size=48)
+        e_cos1.set_color_by_tex(r"\alpha", YELLOW)
+        e_cos1.set_color_by_tex("EG", BLUE)
+        e_cos1.set_color_by_tex("AG", YELLOW)
         e_cos1.next_to(s2, DOWN, aligned_edge=LEFT, buff=0.45)
         self.play(Write(e_cos1), run_time=1.1)
 
-        e_cos2 = MathTex(r"\cos", r"\alpha", r"=\frac{s\sqrt{2}}{s\sqrt{3}}",
-                         font_size=44)
-        e_cos2[1].set_color(YELLOW)
+        e_cos2 = MathTex(r"\cos\alpha=\frac{s\sqrt{2}}{s\sqrt{3}}", font_size=48)
+        e_cos2.set_color_by_tex(r"\alpha", YELLOW)
+        e_cos2.set_color_by_tex(r"s\sqrt{2}", BLUE)
+        e_cos2.set_color_by_tex(r"s\sqrt{3}", YELLOW)
         e_cos2.move_to(e_cos1, aligned_edge=LEFT)
         self.play(TransformMatchingTex(e_cos1, e_cos2), run_time=1.1)
         self.wait(0.5)
 
-        e_cos3 = MathTex(r"\cos", r"\alpha", r"=\sqrt{\frac{2}{3}}",
-                         r"=\frac{\sqrt{6}}{3}", font_size=44)
-        e_cos3[1].set_color(YELLOW)
-        e_cos3[3].set_color(YELLOW)
+        e_cos3 = MathTex(r"\cos\alpha=\sqrt{\frac{2}{3}}=\frac{\sqrt{6}}{3}",
+                         font_size=56)
+        e_cos3.set_color_by_tex(r"\alpha", YELLOW)
+        e_cos3.set_color_by_tex(r"\frac{\sqrt{6}}{3}", YELLOW)
         e_cos3.move_to(e_cos2, aligned_edge=LEFT)
         self.play(TransformMatchingTex(e_cos2, e_cos3), run_time=1.2)
         self.wait(0.9)
@@ -186,8 +194,8 @@ class CubeAngle(Scene):
             MathTex(r"(C)\ \frac{1}{3}\sqrt{6}", font_size=30),
             MathTex(r"(D)\ \frac{1}{2}\sqrt{6}", font_size=30),
             MathTex(r"(E)\ \frac{2}{3}\sqrt{3}", font_size=30),
-        ).arrange(RIGHT, buff=0.38)
-        opts.move_to(np.array([2.0, -3.45, 0.0]))
+        ).arrange(RIGHT, buff=0.35)
+        opts.move_to(np.array([2.5, -3.55, 0.0]))
         self.play(FadeIn(opts, run_time=0.9))
         box = SurroundingRectangle(opts[2], color=YELLOW, buff=0.14,
                                    stroke_width=3)
