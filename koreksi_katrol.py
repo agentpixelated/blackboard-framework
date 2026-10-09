@@ -54,18 +54,25 @@ class KoreksiKatrol(Scene):
         x2 = xmark(np.array([0, 0, 0])).next_to(w2, RIGHT, buff=0.25)
         why2 = tline([("tanda kebalik!", GRAY)], size=24).move_to([-3.55, 0.3, 0])
 
-        # right side: minimal pulley sketch while errors show
-        pul = Circle(radius=0.28, color=WIRE, stroke_width=4).move_to([3.3, 1.6, 0])
-        rope_h = Line([1.2, 1.6, 0], [3.02, 1.6, 0], color=WIRE, stroke_width=4)
-        rope_v = Line([3.58, 1.6, 0], [3.58, 0.4, 0], color=WIRE, stroke_width=4)
-        blk = Rectangle(width=1.3, height=0.8, color=WIRE, stroke_width=4).move_to([1.9, 1.0, 0])
-        hang = Rectangle(width=0.9, height=0.9, color=WIRE, stroke_width=4).move_to([3.58, -0.2, 0])
-        surf = Line([0.6, 0.6, 0], [3.0, 0.6, 0], color=GRAY, stroke_width=3)
+        # right side: ACCURATE pulley FBD
+        # surface
+        surf = Line([0.5, 0, 0], [3.1, 0, 0], color=GRAY, stroke_width=3)
+        # 200 kg block: x in [0.9, 2.3], y in [0, 1.0]
+        blk = Rectangle(width=1.4, height=1.0, color=WIRE, stroke_width=4).move_to([1.6, 0.5, 0])
+        blk_lab = serif("200 kg", size=24, color=WIRE).move_to([1.6, 0.55, 0])
+        # pulley at [3.3, 0.5], r=0.28; rope enters horizontally at y=0.5
+        pul = Circle(radius=0.28, color=WIRE, stroke_width=4).move_to([3.3, 0.5, 0])
+        rope_h = Line([2.3, 0.5, 0], [3.3, 0.5, 0], color=WIRE, stroke_width=4)
+        # hanging mass: center [3.3, -0.9], 0.9 x 1.0 -> top y=-0.4
+        hang = Rectangle(width=0.9, height=1.0, color=WIRE, stroke_width=4).move_to([3.3, -0.9, 0])
+        hang_lab = serif("300 kg", size=24, color=WIRE).move_to([3.3, -0.85, 0])
+        rope_v = Line([3.3, 0.22, 0], [3.3, -0.4, 0], color=WIRE, stroke_width=4)
 
         self.play(FadeIn(head, run_time=0.5))
         self.play(Write(w1, run_time=0.8), FadeIn(x1, run_time=0.4),
                   Create(pul), Create(rope_h), Create(rope_v),
-                  Create(blk), Create(hang), Create(surf), run_time=1.2)
+                  Create(blk), FadeIn(blk_lab), Create(hang), FadeIn(hang_lab),
+                  Create(surf), run_time=1.2)
         self.play(FadeIn(why1, run_time=0.5))
         self.wait(0.6)
         self.play(Write(w2, run_time=0.8), FadeIn(x2, run_time=0.4))
@@ -76,15 +83,16 @@ class KoreksiKatrol(Scene):
         self.play(*[FadeOut(m, run_time=0.6) for m in
                     (head, w1, x1, why1, w2, x2, why2)])
 
-        # force arrows
-        t_arr = arrow([2.55, 1.0, 0], [3.6, 1.0, 0], BLUE)          # T on 200kg
-        f_arr = arrow([1.9, 0.35, 0], [0.9, 0.35, 0], ORANGE)        # friction
-        w_arr = arrow([3.58, 0.35, 0], [3.58, -0.9, 0], W_RED)       # 3000 N down
-        t2_arr = arrow([3.58, -0.75, 0], [3.58, 0.15, 0], BLUE)      # T up on hang
+        # force arrows: T pulls block RIGHT along rope; friction LEFT at surface
+        t_arr = arrow([2.32, 0.72, 0], [2.85, 0.72, 0], BLUE)
+        f_arr = arrow([1.7, -0.18, 0], [0.85, -0.18, 0], ORANGE)
+        # hanging mass: T UP (left of rope), weight DOWN (right of rope) - no overlap
+        t2_arr = arrow([3.02, -0.55, 0], [3.02, 0.05, 0], BLUE)
+        w_arr = arrow([3.58, -0.75, 0], [3.58, -1.55, 0], W_RED)
         lab_t = serif("T", size=28, color=BLUE).next_to(t_arr, UP, buff=0.08)
         lab_f = serif("500 N", size=26, color=ORANGE).next_to(f_arr, DOWN, buff=0.08)
-        lab_w = serif("3000 N", size=26, color=W_RED).move_to([4.35, -0.5, 0])
-        lab_t2 = serif("T", size=28, color=BLUE).move_to([4.0, -0.15, 0])
+        lab_t2 = serif("T", size=28, color=BLUE).next_to(t2_arr, LEFT, buff=0.08)
+        lab_w = serif("3000 N", size=26, color=W_RED).next_to(w_arr, RIGHT, buff=0.1)
 
         eq1 = tline([("T $-$ 500 = 200a", GREEN)], size=34).move_to([-3.55, 2.6, 0])
         eq2 = tline([("3000 $-$ T = 300a", GREEN)], size=34).move_to([-3.55, 1.8, 0])
