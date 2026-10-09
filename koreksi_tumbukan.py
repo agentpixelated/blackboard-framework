@@ -88,22 +88,28 @@ class KoreksiTumbukan(Scene):
                   FadeOut(arr, run_time=0.3), run_time=0.9)
         self.wait(0.8)
 
-        # ---- beat 4: correct derivation ----
+        # ---- beat 4: derive from FUNDAMENTAL laws (no shortcut formula) ----
         self.play(*[FadeOut(m, run_time=0.5) for m in (head2, e1, e2, d1, d2)])
-        f1 = tline([("$v_1' = \\frac{m_1-m_2}{m_1+m_2}\\,v_1$", WHITE)], size=34).move_to([-3.55, 2.6, 0])
-        f2 = tline([("$= \\frac{1000-1500}{2500}\\cdot 15$", WHITE)], size=34).move_to([-3.55, 1.9, 0])
-        f3 = tline([("$= -3$ m/s", YELLOW)], size=38).move_to([-3.55, 1.1, 0])
-        note = tline([("negatif = mental balik", GRAY)], size=24).move_to([-3.55, 0.5, 0])
-        ans = tline([("Jawaban: (C) 3 m/s", YELLOW)], size=40).move_to([-3.55, -0.4, 0])
+        g0 = tline([("Dari rumus dasar:", YELLOW)], size=32).move_to([-3.55, 3.0, 0])
+        g1 = tline([("kekekalan momentum", GREEN)], size=28).move_to([-3.55, 2.4, 0])
+        f1 = tline([("$1000\\cdot 15 = 1000v_1' + 1500v_2'$", WHITE)], size=32).move_to([-3.55, 1.8, 0])
+        g2 = tline([("elastik: $e=1$", GREEN)], size=28).move_to([-3.55, 1.1, 0])
+        f2 = tline([("$v_2' - v_1' = 15$", WHITE)], size=32).move_to([-3.55, 0.5, 0])
+        f3 = tline([("$\\Rightarrow v_1' = -3$ m/s", YELLOW)], size=36).move_to([-3.55, -0.3, 0])
+        note = tline([("negatif = mental balik", GRAY)], size=24).move_to([-3.55, -0.9, 0])
+        ans = tline([("Jawaban: (C) 3 m/s", YELLOW)], size=40).move_to([-3.55, -1.7, 0])
 
         # right: number line showing bounce
         nl = NumberLine(x_range=[-4, 16, 5], length=5.5, color=GRAY,
                         stroke_width=3, include_numbers=False).move_to([3.4, 1.6, 0])
         dot = Dot(point=nl.n2p(15), color=CAR1, radius=0.12)
         lab = serif("$v_1'$ = $-3$", size=26, color=YELLOW).next_to(nl.n2p(-3), DOWN, buff=0.25)
-        self.play(Write(f1, run_time=1.0))
-        self.play(Write(f2, run_time=0.9))
-        self.play(Write(f3, run_time=0.7), FadeIn(note, run_time=0.4),
+        self.play(Write(g0, run_time=0.7))
+        self.play(Write(g1, run_time=0.6), Write(f1, run_time=1.0))
+        self.wait(0.4)
+        self.play(Write(g2, run_time=0.6), Write(f2, run_time=0.8))
+        self.wait(0.4)
+        self.play(Write(f3, run_time=0.8), FadeIn(note, run_time=0.4),
                   Create(nl, run_time=0.6))
         self.play(FadeIn(dot, run_time=0.3))
         self.play(dot.animate.move_to(nl.n2p(-3)), run_time=0.9)
