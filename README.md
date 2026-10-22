@@ -18,6 +18,9 @@ design decisions, expressed as buildable rules.
 | `visual_system.py` | Measured palette + helpers (`thin_axes`, `serif`, `math`) |
 | `integration.py` | Demo video: Riemann sums → the integral, built on the framework |
 | `media/integration_v4.mp4` | The rendered demo (720p) |
+| `visual_system3.py` | The v3 visual system (same measured palette + helpers); imported by the newer scenes |
+| `fluida_rumus_across_case.py` | Five fluid formulas across cases: hydrostatics, Pascal, Archimedes, continuity, Bernoulli/Torricelli |
+| `media/fluida_rumus_across_case.mp4` | The rendered fluida video (720p, 63 s) |
 
 ## Run the demo
 
